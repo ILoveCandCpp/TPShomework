@@ -31,6 +31,8 @@ ATPSCharacter::ATPSCharacter()
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f); // ...at this rotation rate
 	GetCharacterMovement()->JumpZVelocity = 600.f;
 	GetCharacterMovement()->AirControl = 0.2f;
+	GetCharacterMovement()->MaxWalkSpeed = 250.f;
+	GetCharacterMovement()->MaxWalkSpeedCrouched = 250.f;
 
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -56,6 +58,9 @@ void ATPSCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInput
 	check(PlayerInputComponent);
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+	
+	PlayerInputComponent->BindAction("Running",IE_Pressed, this, &ATPSCharacter::SetRunSpeed);
+	PlayerInputComponent->BindAction("Running",IE_Released, this, &ATPSCharacter::SetWalkSpeed);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &ATPSCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ATPSCharacter::MoveRight);
@@ -96,6 +101,16 @@ void ATPSCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location
 void ATPSCharacter::TouchStopped(ETouchIndex::Type FingerIndex, FVector Location)
 {
 		StopJumping();
+}
+
+void ATPSCharacter::SetRunSpeed()
+{
+	GetCharacterMovement()->MaxWalkSpeed = 600.f;
+}
+
+void ATPSCharacter::SetWalkSpeed()
+{
+	GetCharacterMovement()->MaxWalkSpeed = 250.f;
 }
 
 void ATPSCharacter::TurnAtRate(float Rate)

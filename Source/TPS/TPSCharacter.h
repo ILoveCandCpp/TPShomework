@@ -58,6 +58,12 @@ protected:
 	/** Handler for when a touch input stops. */
 	void TouchStopped(ETouchIndex::Type FingerIndex, FVector Location);
 
+	/** 按shift跑 */
+	void SetRunSpeed();
+
+	/** 松开shift走 */
+	void SetWalkSpeed();
+
 protected:
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
