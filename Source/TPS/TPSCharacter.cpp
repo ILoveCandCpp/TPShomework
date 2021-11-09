@@ -8,6 +8,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Public/TPSProjectile.h"
 
 //////////////////////////////////////////////////////////////////////////
 // ATPSCharacter
@@ -26,6 +27,11 @@ ATPSCharacter::ATPSCharacter()
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 
+	isFire = false;
+	Health = 1.f;
+	Energy = 1.f;
+	Ammo = 30;
+	MaxAmmo = 30;
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f); // ...at this rotation rate
@@ -58,6 +64,8 @@ void ATPSCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInput
 	check(PlayerInputComponent);
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ATPSCharacter::Fire);
+	PlayerInputComponent->BindAction("Fire", IE_Released, this, &ATPSCharacter::StopFire);
 	
 	PlayerInputComponent->BindAction("Running",IE_Pressed, this, &ATPSCharacter::SetRunSpeed);
 	PlayerInputComponent->BindAction("Running",IE_Released, this, &ATPSCharacter::SetWalkSpeed);
@@ -111,6 +119,53 @@ void ATPSCharacter::SetRunSpeed()
 void ATPSCharacter::SetWalkSpeed()
 {
 	GetCharacterMovement()->MaxWalkSpeed = 250.f;
+}
+
+void ATPSCharacter::Fire()
+{
+	// 试图发射发射物。
+	UE_LOG(LogTemp, Error, TEXT("FIRE"));
+	isFire = true;
+	if (ProjectileClass)
+	{
+		// 获取摄像机变换
+		FVector CameraLocation;
+		FRotator CameraRotation;
+		GetActorEyesViewPoint(CameraLocation, CameraRotation);
+		UE_LOG(LogTemp, Error, TEXT("FIRE2"));
+		// 设置MuzzleOffset，在略靠近摄像机前生成发射物。
+		MuzzleOffset.Set(100.0f, 0.0f, 0.0f);
+
+		// 将MuzzleOffset从摄像机空间变换到世界空间。
+		FVector MuzzleLocation = CameraLocation + FTransform(CameraRotation).TransformVector(MuzzleOffset);
+
+		// 使目标方向略向上倾斜。
+		FRotator MuzzleRotation = CameraRotation;
+		MuzzleRotation.Pitch += 10.0f;
+
+		UWorld* World = GetWorld();
+		if (World)
+		{
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.Owner = this;
+			SpawnParams.Instigator = GetInstigator();
+
+			// 在枪口位置生成发射物。
+			ATPSProjectile* Projectile = World->SpawnActor<ATPSProjectile>(ProjectileClass, MuzzleLocation, MuzzleRotation, SpawnParams);
+			if (Projectile)
+			{
+				// 设置发射物的初始轨迹。
+				FVector LaunchDirection = MuzzleRotation.Vector();
+				Projectile->FireInDirection(LaunchDirection);
+			}
+		}
+		// isFire = false;
+	}
+}
+
+void ATPSCharacter::StopFire()
+{
+	isFire = false;
 }
 
 void ATPSCharacter::TurnAtRate(float Rate)
