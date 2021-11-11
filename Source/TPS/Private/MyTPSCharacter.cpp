@@ -3,6 +3,7 @@
 
 #include "MyTPSCharacter.h"
 
+#include "GunSkeletalMeshComponent.h"
 #include "TPSProjectile.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -41,6 +42,23 @@ AMyTPSCharacter::AMyTPSCharacter()
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 
 	GetCharacterMovement()->bIgnoreBaseRotation = true;
+	
+	Gun = CreateDefaultSubobject<UGunSkeletalMeshComponent>(TEXT("Gun"));
+	if (Gun != nullptr)
+	{
+		// UE_LOG(LogTemp,Error, TEXT("12121111"));
+		// UGunSkeletalMeshComponent* MyGun = Cast<UGunSkeletalMeshComponent>(Gun);
+		auto AssetGunMesh = ConstructorHelpers::FObjectFinder<USkeletalMesh>(TEXT("SkeletalMesh'/Game/FPWeapon/Mesh/SK_FPGun.SK_FPGun'"));
+		if(AssetGunMesh.Succeeded())
+		{
+			Gun->SetSkeletalMesh(AssetGunMesh.Object);
+			Gun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, FName("index_03_r_socket"));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp,Error, TEXT("1dasd2121111"));
+	}
 }
 
 // Called when the game starts or when spawned
@@ -115,7 +133,7 @@ void AMyTPSCharacter::StopJumping()
 void AMyTPSCharacter::Fire()
 {
 	// 试图发射发射物。
-	UE_LOG(LogTemp, Error, TEXT("FIRE"));
+	// UE_LOG(LogTemp, Error, TEXT("FIRE"));
 	isFire = true;
 	if (ProjectileClass)
 	{
@@ -123,7 +141,7 @@ void AMyTPSCharacter::Fire()
 		FVector CameraLocation;
 		FRotator CameraRotation;
 		GetActorEyesViewPoint(CameraLocation, CameraRotation);
-		UE_LOG(LogTemp, Error, TEXT("FIRE2"));
+		// UE_LOG(LogTemp, Error, TEXT("FIRE2"));
 		// 设置MuzzleOffset，在略靠近摄像机前生成发射物。
 		MuzzleOffset.Set(100.0f, 0.0f, 0.0f);
 

@@ -46,7 +46,9 @@ public:
 	// 要生成的发射物类。
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Projectile)
 	TSubclassOf<class ATPSProjectile> ProjectileClass;
-	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
+	USkeletalMeshComponent* Gun;
 
 protected:
 	// Called when the game starts or when spawned
