@@ -8,6 +8,7 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 AMyTPSCharacter::AMyTPSCharacter()
@@ -16,6 +17,15 @@ AMyTPSCharacter::AMyTPSCharacter()
 	PrimaryActorTick.bCanEverTick = true;
 
 	//实例化你的类组件
+	TP_Gun = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Gun"));
+	// TP_Gun->SetOnlyOwnerSee(false);			// otherwise won't be visible in the multiplayer
+	// TP_Gun->bCastDynamicShadow = false;
+	// TP_Gun->CastShadow = false;
+	TP_Gun->SetupAttachment(RootComponent);
+
+	FP_MuzzleLocation = CreateDefaultSubobject<USceneComponent>(TEXT("MuzzleLocation"));
+	FP_MuzzleLocation->SetupAttachment(TP_Gun);
+	FP_MuzzleLocation->SetRelativeLocation(FVector(0.2f, 48.4f, -10.6f));
 
 	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComp"));
 
@@ -43,28 +53,13 @@ AMyTPSCharacter::AMyTPSCharacter()
 
 	GetCharacterMovement()->bIgnoreBaseRotation = true;
 	
-	Gun = CreateDefaultSubobject<UGunSkeletalMeshComponent>(TEXT("Gun"));
-	if (Gun != nullptr)
-	{
-		// UE_LOG(LogTemp,Error, TEXT("12121111"));
-		// UGunSkeletalMeshComponent* MyGun = Cast<UGunSkeletalMeshComponent>(Gun);
-		auto AssetGunMesh = ConstructorHelpers::FObjectFinder<USkeletalMesh>(TEXT("SkeletalMesh'/Game/FPWeapon/Mesh/SK_FPGun.SK_FPGun'"));
-		if(AssetGunMesh.Succeeded())
-		{
-			Gun->SetSkeletalMesh(AssetGunMesh.Object);
-			Gun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, FName("index_03_r_socket"));
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp,Error, TEXT("1dasd2121111"));
-	}
 }
 
 // Called when the game starts or when spawned
 void AMyTPSCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	TP_Gun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, FName("index_03_r_socket"));
 	
 }
 
@@ -135,40 +130,45 @@ void AMyTPSCharacter::Fire()
 	// 试图发射发射物。
 	// UE_LOG(LogTemp, Error, TEXT("FIRE"));
 	isFire = true;
-	if (ProjectileClass)
+	if (ProjectileClass && bHasGun)
 	{
-		// 获取摄像机变换
-		FVector CameraLocation;
-		FRotator CameraRotation;
-		GetActorEyesViewPoint(CameraLocation, CameraRotation);
-		// UE_LOG(LogTemp, Error, TEXT("FIRE2"));
-		// 设置MuzzleOffset，在略靠近摄像机前生成发射物。
 		MuzzleOffset.Set(100.0f, 0.0f, 0.0f);
-
-		// 将MuzzleOffset从摄像机空间变换到世界空间。
-		FVector MuzzleLocation = CameraLocation + FTransform(CameraRotation).TransformVector(MuzzleOffset);
-
-		// 使目标方向略向上倾斜。
-		FRotator MuzzleRotation = CameraRotation;
-		MuzzleRotation.Pitch += 10.0f;
-
+		
 		UWorld* World = GetWorld();
 		if (World)
 		{
-			FActorSpawnParameters SpawnParams;
-			SpawnParams.Owner = this;
-			SpawnParams.Instigator = GetInstigator();
+			
+			const FRotator SpawnRotation = GetControlRotation();
+			// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
+			const FVector SpawnLocation = ((FP_MuzzleLocation != nullptr) ? FP_MuzzleLocation->GetComponentLocation() : GetActorLocation()) + SpawnRotation.RotateVector(MuzzleOffset);
 
-			// 在枪口位置生成发射物。
-			ATPSProjectile* Projectile = World->SpawnActor<ATPSProjectile>(ProjectileClass, MuzzleLocation, MuzzleRotation, SpawnParams);
-			if (Projectile)
-			{
-				// 设置发射物的初始轨迹。
-				FVector LaunchDirection = MuzzleRotation.Vector();
-				Projectile->FireInDirection(LaunchDirection);
-			}
+			//Set Spawn Collision Handling Override
+			FActorSpawnParameters ActorSpawnParams;
+			ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+
+			// spawn the projectile at the muzzle
+			World->SpawnActor<ATPSProjectile>(ProjectileClass, SpawnLocation, SpawnRotation, ActorSpawnParams);
 		}
 		// isFire = false;
+
+		// try and play the sound if specified
+		if (FireSound != nullptr)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
+		}
+
+		// try and play a firing animation if specified
+		if (FireAnimation != nullptr)
+		{
+			UE_LOG(LogTemp, Error, TEXT("hello"));
+			// Get the animation object for the arms mesh
+			UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+			if (AnimInstance != nullptr)
+			{
+				UE_LOG(LogTemp, Error, TEXT("dsajkdhajslkdhask"));
+				AnimInstance->Montage_Play(FireAnimation, 0.5f);
+			}
+		}
 	}
 	
 }
