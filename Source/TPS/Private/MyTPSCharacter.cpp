@@ -109,8 +109,23 @@ void AMyTPSCharacter::EndCrouch()
 	UnCrouch();
 }
 
+void AMyTPSCharacter::TurnAtRate(float Rate)
+{
+	AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
+}
+
+void AMyTPSCharacter::LookUpAtRate(float Rate)
+{
+	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
+}
+
 void AMyTPSCharacter::Jump()
 {
+	if(Energy < 0.2)
+	{
+		return;
+	}
+	Energy -= 0.2;
 	bIsJumping = true;
 	Super::Jump();
 }
@@ -123,6 +138,10 @@ void AMyTPSCharacter::StopJumping()
 
 void AMyTPSCharacter::Fire()
 {
+	if(Ammo < OnceFiredAmmo)
+	{
+		return;
+	}
 	// 试图发射发射物。
 	// UE_LOG(LogTemp, Error, TEXT("FIRE"));
 	isFire = true;
@@ -189,7 +208,9 @@ void AMyTPSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	PlayerInputComponent->BindAxis("MoveForward", this, &AMyTPSCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AMyTPSCharacter::MoveRight);
 	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
+	PlayerInputComponent->BindAxis("TurnRate", this, &AMyTPSCharacter::TurnAtRate);
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
+	PlayerInputComponent->BindAxis("LookUpRate", this, &AMyTPSCharacter::LookUpAtRate);
 
 	PlayerInputComponent->BindAction("Jump",IE_Pressed,this,&AMyTPSCharacter::Jump);
 	PlayerInputComponent->BindAction("Jump",IE_Released,this,&AMyTPSCharacter::StopJumping);
