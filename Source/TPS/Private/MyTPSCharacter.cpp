@@ -1,9 +1,5 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "MyTPSCharacter.h"
 
-#include "GunSkeletalMeshComponent.h"
 #include "TPSProjectile.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -205,4 +201,3 @@ void AMyTPSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AMyTPSCharacter::Fire);
 	PlayerInputComponent->BindAction("Fire", IE_Released, this, &AMyTPSCharacter::StopFire);
 }
-

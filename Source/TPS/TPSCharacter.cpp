@@ -8,7 +8,6 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "Public/TPSProjectile.h"
 
 //////////////////////////////////////////////////////////////////////////
 // ATPSCharacter
@@ -27,21 +26,11 @@ ATPSCharacter::ATPSCharacter()
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 
-	isFire = false;
-	Health = 1.f;
-	Energy = 1.f;
-	Ammo = 30;
-	MaxAmmo = 30;
-
-	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -90.f), FQuat(FRotator(0.f,-90.f,0.f)));
-	
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f); // ...at this rotation rate
 	GetCharacterMovement()->JumpZVelocity = 600.f;
 	GetCharacterMovement()->AirControl = 0.2f;
-	GetCharacterMovement()->MaxWalkSpeed = 300.f;
-	GetCharacterMovement()->MaxWalkSpeedCrouched = 300.f;
 
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -67,11 +56,6 @@ void ATPSCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInput
 	check(PlayerInputComponent);
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
-	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ATPSCharacter::Fire);
-	PlayerInputComponent->BindAction("Fire", IE_Released, this, &ATPSCharacter::StopFire);
-	
-	PlayerInputComponent->BindAction("Running",IE_Pressed, this, &ATPSCharacter::SetRunSpeed);
-	PlayerInputComponent->BindAction("Running",IE_Released, this, &ATPSCharacter::SetWalkSpeed);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &ATPSCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ATPSCharacter::MoveRight);
@@ -112,63 +96,6 @@ void ATPSCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location
 void ATPSCharacter::TouchStopped(ETouchIndex::Type FingerIndex, FVector Location)
 {
 		StopJumping();
-}
-
-void ATPSCharacter::SetRunSpeed()
-{
-	GetCharacterMovement()->MaxWalkSpeed = 600.f;
-}
-
-void ATPSCharacter::SetWalkSpeed()
-{
-	GetCharacterMovement()->MaxWalkSpeed = 300.f;
-}
-
-void ATPSCharacter::Fire()
-{
-	// 试图发射发射物。
-	UE_LOG(LogTemp, Error, TEXT("FIRE"));
-	isFire = true;
-	if (ProjectileClass)
-	{
-		// 获取摄像机变换
-		FVector CameraLocation;
-		FRotator CameraRotation;
-		GetActorEyesViewPoint(CameraLocation, CameraRotation);
-		UE_LOG(LogTemp, Error, TEXT("FIRE2"));
-		// 设置MuzzleOffset，在略靠近摄像机前生成发射物。
-		MuzzleOffset.Set(100.0f, 0.0f, 0.0f);
-
-		// 将MuzzleOffset从摄像机空间变换到世界空间。
-		FVector MuzzleLocation = CameraLocation + FTransform(CameraRotation).TransformVector(MuzzleOffset);
-
-		// 使目标方向略向上倾斜。
-		FRotator MuzzleRotation = CameraRotation;
-		MuzzleRotation.Pitch += 10.0f;
-
-		UWorld* World = GetWorld();
-		if (World)
-		{
-			FActorSpawnParameters SpawnParams;
-			SpawnParams.Owner = this;
-			SpawnParams.Instigator = GetInstigator();
-
-			// 在枪口位置生成发射物。
-			ATPSProjectile* Projectile = World->SpawnActor<ATPSProjectile>(ProjectileClass, MuzzleLocation, MuzzleRotation, SpawnParams);
-			if (Projectile)
-			{
-				// 设置发射物的初始轨迹。
-				FVector LaunchDirection = MuzzleRotation.Vector();
-				Projectile->FireInDirection(LaunchDirection);
-			}
-		}
-		// isFire = false;
-	}
-}
-
-void ATPSCharacter::StopFire()
-{
-	isFire = false;
 }
 
 void ATPSCharacter::TurnAtRate(float Rate)

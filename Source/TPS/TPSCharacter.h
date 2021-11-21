@@ -29,34 +29,6 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
 	float BaseLookUpRate;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
-	float Health = 1.0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
-	float Energy = 1.0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
-	int32 Ammo = 30;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
-	int32 OnceFiredAmmo = 1;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
-	int32 MaxAmmo = 30;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
-	bool isFire = false;
-	// 枪口相对于摄像机位置的偏移。
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
-	FVector MuzzleOffset;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
-	bool bHasGun = true;
-
-	// 要生成的发射物类。
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Projectile)
-	TSubclassOf<class ATPSProjectile> ProjectileClass;
-
 protected:
 
 	/** Resets HMD orientation in VR. */
@@ -85,18 +57,6 @@ protected:
 
 	/** Handler for when a touch input stops. */
 	void TouchStopped(ETouchIndex::Type FingerIndex, FVector Location);
-
-	/** 按shift跑 */
-	void SetRunSpeed();
-
-	/** 松开shift走 */
-	void SetWalkSpeed();
-
-	// 处理发射物射击的函数。
-	UFUNCTION()
-	void Fire();
-
-	void StopFire();
 
 protected:
 	// APawn interface

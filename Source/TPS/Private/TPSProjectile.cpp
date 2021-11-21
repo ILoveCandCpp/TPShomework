@@ -38,7 +38,7 @@ ATPSProjectile::ATPSProjectile()
 		}
 	}
 
-	static ConstructorHelpers::FObjectFinder<UMaterial>Material(TEXT("Material'/Game/ThirdPerson/Meshes/ThirdMaterial.ThirdMaterial'"));
+	static ConstructorHelpers::FObjectFinder<UMaterial>Material(TEXT("Material'/Game/ThirdPerson/Meshes/ThirdPersonProjectileMaterial.ThirdPersonProjectileMaterial'"));
 	if (Material.Succeeded())
 	{
 		// UE_LOG(LogTemp, Error, TEXT("Material"));
@@ -95,4 +95,3 @@ void ATPSProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor
 
 	Destroy();
 }
-
