@@ -48,6 +48,8 @@ AMyTPSCharacter::AMyTPSCharacter()
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 
 	GetCharacterMovement()->bIgnoreBaseRotation = true;
+
+	
 	
 }
 
@@ -144,11 +146,12 @@ void AMyTPSCharacter::Fire()
 	}
 	// 试图发射发射物。
 	// UE_LOG(LogTemp, Error, TEXT("FIRE"));
-	isFire = true;
+	
 	if (ProjectileClass && bHasGun)
 	{
 		MuzzleOffset.Set(100.0f, 0.0f, 0.0f);
-		
+		isFire = true;
+		Ammo -= OnceFiredAmmo;
 		UWorld* World = GetWorld();
 		if (World)
 		{
@@ -193,10 +196,24 @@ void AMyTPSCharacter::StopFire()
 	isFire = false;
 }
 
+void AMyTPSCharacter::ResumeAmmo()
+{
+	Ammo = MaxAmmo;
+}
+
 // Called every frame
 void AMyTPSCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	if(Energy >= 1.0)
+	{
+		return;
+	}
+	Energy += 0.1 * DeltaTime;
+	if( Energy >= 1.0)
+	{
+		Energy = 1.0;
+	}
 
 }
 
@@ -221,4 +238,5 @@ void AMyTPSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AMyTPSCharacter::Fire);
 	PlayerInputComponent->BindAction("Fire", IE_Released, this, &AMyTPSCharacter::StopFire);
+	PlayerInputComponent->BindAction("ResumeAmmo", IE_Pressed, this, &AMyTPSCharacter::ResumeAmmo);
 }

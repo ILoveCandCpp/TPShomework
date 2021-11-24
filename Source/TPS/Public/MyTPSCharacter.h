@@ -118,6 +118,10 @@ protected:
 	//停止开火
 	void StopFire();
 
+	/** 回复Ammo */
+	UFUNCTION(BlueprintCallable)
+	void ResumeAmmo();
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
