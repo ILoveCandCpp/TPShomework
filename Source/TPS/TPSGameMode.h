@@ -28,7 +28,7 @@ protected:
 	virtual void BeginPlay() override;
 
 	/** 用作菜单的控件实例。*/
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UUserWidget* CurrentWidget;
 };
 

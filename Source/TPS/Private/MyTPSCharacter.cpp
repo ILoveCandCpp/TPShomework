@@ -19,6 +19,11 @@ AMyTPSCharacter::AMyTPSCharacter()
 	// TP_Gun->CastShadow = false;
 	TP_Gun->SetupAttachment(RootComponent);
 
+	//创建聚光源模拟手电筒 默认不开启手电筒
+	TP_SpotLight = CreateDefaultSubobject<USpotLightComponent>(TEXT("SpotLight"));
+	// TP_SpotLight->SetVisibleFlag(false);
+	TP_SpotLight->SetupAttachment(TP_Gun);
+
 	FP_MuzzleLocation = CreateDefaultSubobject<USceneComponent>(TEXT("MuzzleLocation"));
 	FP_MuzzleLocation->SetupAttachment(TP_Gun);
 	FP_MuzzleLocation->SetRelativeLocation(FVector(0.2f, 48.4f, -10.6f));
@@ -49,8 +54,25 @@ AMyTPSCharacter::AMyTPSCharacter()
 
 	GetCharacterMovement()->bIgnoreBaseRotation = true;
 
-	
-	
+	bUseControllerRotationYaw = true;
+}
+
+void AMyTPSCharacter::OpenSpotLight()
+{
+	if(TP_SpotLight)
+	{
+		// TP_SpotLight->SetVisibleFlag(TP_SpotLight->GetVisibleFlag());
+	}
+}
+
+void AMyTPSCharacter::UnLimitFire()
+{
+	bUseControllerRotationYaw = false;
+}
+
+void AMyTPSCharacter::LimitFire()
+{
+	bUseControllerRotationYaw = true;
 }
 
 // Called when the game starts or when spawned
@@ -93,6 +115,7 @@ void AMyTPSCharacter::MoveRight(float AxisValue)
 
 void AMyTPSCharacter::BeginSprint()
 {
+	if(Energy <= 0) return;
 	GetCharacterMovement()->MaxWalkSpeed = 1000.0f;
 }
 
@@ -140,7 +163,8 @@ void AMyTPSCharacter::StopJumping()
 
 void AMyTPSCharacter::Fire()
 {
-	if(Ammo < OnceFiredAmmo)
+	// 子弹不够及冲刺跳跃时无法开火
+	if(Ammo < OnceFiredAmmo || GetCharacterMovement()->MaxWalkSpeed > 600.f || bIsJumping == true)
 	{
 		return;
 	}
@@ -150,7 +174,7 @@ void AMyTPSCharacter::Fire()
 	if (ProjectileClass && bHasGun)
 	{
 		MuzzleOffset.Set(100.0f, 0.0f, 0.0f);
-		isFire = true;
+		bIsFire = true;
 		Ammo -= OnceFiredAmmo;
 		UWorld* World = GetWorld();
 		if (World)
@@ -193,7 +217,7 @@ void AMyTPSCharacter::Fire()
 
 void AMyTPSCharacter::StopFire()
 {
-	isFire = false;
+	bIsFire = false;
 }
 
 void AMyTPSCharacter::ResumeAmmo()
@@ -205,16 +229,27 @@ void AMyTPSCharacter::ResumeAmmo()
 void AMyTPSCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	if(Energy >= 1.0)
+	// 走路时回复能量
+	if(Energy < 1.0 && GetCharacterMovement()->MaxWalkSpeed <= 600.f)
 	{
-		return;
-	}
-	Energy += 0.1 * DeltaTime;
-	if( Energy >= 1.0)
-	{
-		Energy = 1.0;
+		Energy += 0.1 * DeltaTime;
+		if(Energy > 1)
+		{
+			Energy = 1;
+		}
 	}
 
+	// 冲刺消耗能量
+	if(Energy > 0 && GetCharacterMovement()->MaxWalkSpeed > 600.f)
+	{
+		Energy -= 0.02 * DeltaTime;
+	}
+
+	if(Energy <= 0 && GetCharacterMovement()->MaxWalkSpeed > 600.f)
+	{
+		EndSprint();
+	}
+	
 }
 
 // Called to bind functionality to input
@@ -235,6 +270,9 @@ void AMyTPSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	PlayerInputComponent->BindAction("Crouch",IE_Released,this,&AMyTPSCharacter::EndCrouch);
 	PlayerInputComponent->BindAction("Sprint",IE_Pressed,this,&AMyTPSCharacter::BeginSprint);
 	PlayerInputComponent->BindAction("Sprint",IE_Released,this,&AMyTPSCharacter::EndSprint);
+	PlayerInputComponent->BindAction("OpenSpot", IE_Pressed, this, &AMyTPSCharacter::OpenSpotLight);
+	PlayerInputComponent->BindAction("UnLimitFire",IE_Pressed,this, &AMyTPSCharacter::UnLimitFire);
+	PlayerInputComponent->BindAction("UnLimitFire",IE_Released,this, &AMyTPSCharacter::LimitFire);
 
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AMyTPSCharacter::Fire);
 	PlayerInputComponent->BindAction("Fire", IE_Released, this, &AMyTPSCharacter::StopFire);

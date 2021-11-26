@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/SpotLightComponent.h"
 #include "GameFramework/Character.h"
 #include "MyTPSCharacter.generated.h"
 
@@ -42,7 +43,7 @@ public:
 	int32 MaxAmmo = 30;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
-	bool isFire = false;
+	bool bIsFire = false;
 	
 	// 枪口相对于摄像机位置的偏移。
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
@@ -57,6 +58,15 @@ public:
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = Mesh)
 	USkeletalMeshComponent* TP_Gun;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = Mesh)
+	USpotLightComponent* TP_SpotLight;
+
+	void OpenSpotLight();
+
+	void UnLimitFire();
+
+	void LimitFire();
 
 	/** Location on gun mesh where projectiles should spawn. */
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)

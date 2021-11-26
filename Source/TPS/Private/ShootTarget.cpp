@@ -28,10 +28,11 @@ void AShootTarget::Tick(float DeltaTime)
 
 }
 
-void AShootTarget::NotifyActorBeginOverlap(AActor* OtherActor)
+void AShootTarget::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimitiveComponent* OtherComp,
+	bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit)
 {
-	Super::NotifyActorBeginOverlap(OtherActor);
-	if(Cast<ATPSProjectile>(OtherActor))
+	Super::NotifyHit(MyComp, Other, OtherComp, bSelfMoved, HitLocation, HitNormal, NormalImpulse, Hit);
+	if(Cast<ATPSProjectile>(Other))
 	{
 		ATPSGameStateBase *GS = Cast<ATPSGameStateBase>(GetWorld()->GetGameState());
 		GS->Socre++;
@@ -39,7 +40,7 @@ void AShootTarget::NotifyActorBeginOverlap(AActor* OtherActor)
 		{
 			GS->bIsVictory = true;
 		}
-		OtherActor->Destroy();
+		Other->Destroy();
 	}
 }
 
